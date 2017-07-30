@@ -153,11 +153,10 @@ class Database(object):
         return self.schedule[task.stage]
 
 def remember(description):
+    database = Database()
     database.remember(description)
 
 def review(task, grade):
-    return database.review(task, grade)
+    return Database().review(task, grade)
 
-d = Database()
-d.remember("first item")
 
