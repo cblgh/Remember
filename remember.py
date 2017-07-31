@@ -3,6 +3,7 @@
 import datetime
 import io
 import json
+import sys
 
 DATE_FORMAT = "%Y-%m-%d"
 TODAY = datetime.datetime.today().strftime(DATE_FORMAT)
@@ -77,14 +78,13 @@ class Database(object):
         try: 
             with io.open(self.DEFAULT_PATH, "r", encoding="utf-8") as f:
                 obj = json.load(f)
-                print obj
                 # these wont exist on first load
                 if "tasks" in obj:
                     self.tasks = obj["tasks"]
                 if "counter" in obj:
                     self.counter = obj["counter"]
         except IOError as e:
-            print e
+            pass
 
     def save(self):
         with io.open(self.DEFAULT_PATH, "w", encoding="utf-8") as f:
@@ -96,7 +96,6 @@ class Database(object):
     def populate_calendar(self):
         calendar = dict()
         for _, task in self.tasks.items():
-            print task
             date = task["review_date"]
             if not date in calendar:
                 calendar[date] = []
@@ -152,6 +151,10 @@ class Database(object):
         # return amount of days before next review
         return self.schedule[task.stage]
 
+    def get_tasks(self):
+        return "\n".join(["{} {}".format(index, task["data"]) for (index, task) in
+            enumerate(self.todays_tasks)])
+
 def remember(description):
     database = Database()
     database.remember(description)
@@ -159,4 +162,16 @@ def remember(description):
 def review(task, grade):
     return Database().review(task, grade)
 
+def tasks():
+    return Database().get_tasks()
 
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print "usage: [tasks|remember <description>|review <item number> <grade>]"
+        sys.exit()
+    if sys.argv[1] == "tasks":
+        print tasks()
+    elif sys.argv[1] == "remember" and len(sys.argv) >= 3:
+        remember(sys.argv[2])
+    elif sys.argv[1] == "review" and len(sys.argv) >= 4:
+        review(*sys.argv[2:])
