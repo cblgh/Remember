@@ -54,6 +54,8 @@ class Database(object):
         # 4 years between reviews is like... enough. i can take time out to review
         # well-known concepts every 4 years
         self.MAX_REVIEW_INTERVAL = 365 * 4
+        # to prevent overwhelming myself i only want to display a fixed number of tasks each time i review the list
+        self.MAX_CONCURRENT_TASKS = 5
         # path where flatfile database resides
         self.DEFAULT_PATH = "srs.json"
 
@@ -67,6 +69,10 @@ class Database(object):
                 for task in self.calendar[date]:
                     # and add them to today's tasks to review
                     self.todays_tasks.append(task)
+        # only show MAX_CONCURRENT_TASKS to prevent overwhelming myself,
+        # and adding a bit of motivation to finish tasks (in order to see more,
+        # (hopefully))
+        self.todays_tasks = self.todays_tasks[:self.MAX_CONCURRENT_TASKS]
 
     def generate_id(self):
         task_id = self.counter
@@ -162,7 +168,8 @@ class Database(object):
 
     def get_tasks(self, category):
         return "\n".join(["{} {}".format(index, task["data"]) for (index, task) in
-            enumerate(self.todays_tasks) if (not category or (category and task["category"] is category))])
+            enumerate(self.todays_tasks) if (not category or (category and
+                task["category"] == category))])
 
 def remember(category, description, answer, stage=0):
     database = Database()
@@ -172,6 +179,7 @@ def review(task_number, grade):
     return Database().review(task_number, grade)
 
 def tasks(category=None):
+    print category
     return Database().get_tasks(category)
 
 if __name__ == "__main__":
@@ -179,7 +187,14 @@ if __name__ == "__main__":
         print "usage: [tasks|remember <description>|review <item number> <grade>]"
         sys.exit()
     if sys.argv[1] == "tasks":
-        print tasks()
+        category = None
+        if len(sys.argv) > 2:
+            category = sys.argv[2]
+        tasks = tasks(category)
+        if not tasks:
+            print "no tasks left! (or empty category..)"
+        else: 
+            print tasks
     elif sys.argv[1] == "remember" and len(sys.argv) >= 3:
         remember(sys.argv[2])
     elif sys.argv[1] == "review" and len(sys.argv) >= 4:
