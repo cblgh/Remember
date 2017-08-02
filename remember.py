@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import io
 import json
 import sys
+import os
 
 DATE_FORMAT = "%Y-%m-%d"
 TODAY = datetime.today().strftime(DATE_FORMAT)
@@ -25,7 +26,7 @@ class Database(object):
         # 4 years between reviews is like... enough. i can take time out to review
         # well-known concepts every 4 years
         self.MAX_REVIEW_INTERVAL = 365 * 4
-        self.DEFAULT_PATH = "F:/code/tome-remember/srs.json"
+        self.DEFAULT_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "srs.json")
 
         self.load()
         self.calendar = self.populate_calendar()
