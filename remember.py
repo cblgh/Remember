@@ -121,7 +121,7 @@ class Database(object):
     def get_interval(self, task):
         # this is a very mature task, set its review time to the max
         if task["stage"] > len(self.schedule):
-            return MAX_REVIEW_INTERVAL
+            return self.MAX_REVIEW_INTERVAL
         return self.schedule[task["stage"]]
 
     def schedule_task(self, task):
@@ -172,8 +172,9 @@ class Database(object):
                 task["category"] == category))])
 
 def remember(category, description, answer, stage=0):
+    print stage
     database = Database()
-    database.remember(category, description, stage)
+    database.remember(category, description, answer, stage)
 
 def review(task_number, grade):
     return Database().review(task_number, grade)
@@ -184,7 +185,7 @@ def tasks(category=None):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print "usage: [tasks|remember <description>|review <item number> <grade>]"
+        print "usage: [tasks <optional: category>|remember <category> <description:answer>|review <item number> <grade>]"
         sys.exit()
     if sys.argv[1] == "tasks":
         category = None
@@ -196,6 +197,9 @@ if __name__ == "__main__":
         else: 
             print tasks
     elif sys.argv[1] == "remember" and len(sys.argv) >= 3:
-        remember(sys.argv[2])
+        category = sys.argv[2]
+        description, answer, stage = (" ".join(sys.argv[3:]).split(":") + ["", "", "0"])[:3]
+        remember(category, description, answer, stage)
+        # remember(sys.argv[2])
     elif sys.argv[1] == "review" and len(sys.argv) >= 4:
         print review(*sys.argv[2:])
