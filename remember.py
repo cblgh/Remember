@@ -18,6 +18,7 @@ TODAY = datetime.datetime.today().strftime(DATE_FORMAT)
 
 # a task has:
 #   an id (a sequential integer)
+#   a category (french, general)
 #   a creation date (unixtime), 
 #   a review date 
 #   and a stage
@@ -128,10 +129,12 @@ class Database(object):
         self.tasks[task["task_id"]] = task
         self.save()
 
-    def remember(self, description):
+    def remember(self, category, description, answer="", stage=0):
         task = dict()
+        task["category"] = category
         task["data"] = description
-        task["stage"] = 0
+        task["answer"] = answer
+        task["stage"] = stage
         task["review_date"] = TODAY
         task["creation_date"] = TODAY
         task["task_id"] = self.generate_id()
@@ -151,19 +154,19 @@ class Database(object):
         # return amount of days before next review
         return self.schedule[task.stage]
 
-    def get_tasks(self):
+    def get_tasks(self, category):
         return "\n".join(["{} {}".format(index, task["data"]) for (index, task) in
-            enumerate(self.todays_tasks)])
+            enumerate(self.todays_tasks) if (!category or (category and task["category"] is category))])
 
-def remember(description):
+def remember(category, description, answer, stage=0):
     database = Database()
-    database.remember(description)
+    database.remember(category, description, stage)
 
 def review(task, grade):
     return Database().review(task, grade)
 
-def tasks():
-    return Database().get_tasks()
+def tasks(category=None):
+    return Database().get_tasks(category)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
