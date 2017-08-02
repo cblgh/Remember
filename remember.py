@@ -20,14 +20,11 @@ class Database(object):
         self.schedule = [1, 2, 6, 12, 18, 30, 48, 78, 126, 204, 330, 534, 864, 1398]
         # the list of tasks for review today
         self.todays_tasks = list()
-        # max amount of tasks to review each day
+        # max amount of tasks to review at any time 
         self.MAX_TASKS = 4
         # 4 years between reviews is like... enough. i can take time out to review
         # well-known concepts every 4 years
         self.MAX_REVIEW_INTERVAL = 365 * 4
-        # to prevent overwhelming myself i only want to display a fixed number of tasks each time i review the list
-        self.MAX_CONCURRENT_TASKS = 5
-        # path where flatfile database resides
         self.DEFAULT_PATH = "srs.json"
 
         self.load()
@@ -41,9 +38,8 @@ class Database(object):
                     # and add them to today's tasks to review
                     self.todays_tasks.append(task)
         # only show MAX_CONCURRENT_TASKS to prevent overwhelming myself,
-        # and adding a bit of motivation to finish tasks (in order to see more,
-        # (hopefully))
-        self.todays_tasks = self.todays_tasks[:self.MAX_CONCURRENT_TASKS]
+        # and add a bit of motivation to finish tasks (in order to see more, (hopefully))
+        self.todays_tasks = self.todays_tasks[:self.MAX_TASKS]
 
     def generate_id(self):
         task_id = self.counter
@@ -81,10 +77,13 @@ class Database(object):
         return calendar
 
     def check_calendar(self, task):
-        calendar_tasks = calendar[task["review_date"]]
-        if len(calendar_tasks) > MAX_TASKS:
+        temp_date = task["review_date"]
+        if temp_date not in self.calendar:
+            return task["review_date"]
+        calendar_tasks = self.calendar[temp_date]
+        if len(calendar_tasks) > self.MAX_TASKS and task["stage"] > 3:
             # schedule it a day earlier
-            task["review_date"] = task["review_date"] - 1
+            task["review_date"] = (datetime.strptime(temp_date, DATE_FORMAT) - timedelta(days=1)).strftime(DATE_FORMAT)
         else:
             return task["review_date"]
         return self.check_calendar(task)
@@ -99,6 +98,8 @@ class Database(object):
         interval = timedelta(days=self.get_interval(task))
         new_date = datetime.strptime(task["review_date"], DATE_FORMAT) + interval
         task["review_date"] = new_date.strftime(DATE_FORMAT)
+        # check calendar and reschedule if there are collisions
+        task["review_date"] = self.check_calendar(task)
         self.update_calendar(task)
         self.save()
 
@@ -152,7 +153,6 @@ def review(task_number, grade):
     return Database().review(task_number, grade)
 
 def tasks(category=None):
-    print category
     return Database().get_tasks(category)
 
 if __name__ == "__main__":
