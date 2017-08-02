@@ -8,35 +8,6 @@ import sys
 DATE_FORMAT = "%Y-%m-%d"
 TODAY = datetime.today().strftime(DATE_FORMAT)
 
-# INTENT
-# i want to remember specific items using prompts to aid recall like
-# "how does kademlia work?" 
-# i don't want to get overloaded with items to review, so i spread out reviews
-# such that there are never more than x tasks to review per day
-
-
-# a task has:
-#   an id (a sequential integer)
-#   a category (french, general)
-#   a creation date (unixtime), 
-#   a review date 
-#   and a stage
-
-# afterwards each stage's interval is calculated as the sum of the two preceeding intervals
-# next_interval = schedule[stage-1] + schedule[stage-2]
-# so interval = schedule[3] + schedule[4] = 6 + 12 = 18
-# for a in xrange(10):
-#     interval = schedule[-1] + schedule[-2]
-#     schedule.append(interval)
-#
-
-# interval => min(schedule[stage], 365*3)
-
-# the database containing all of the tasks and their review dates
-# the database has:
-#   a counter (from which to spawn ids)
-#   the review schedule (a list of intervals)
-#   a map of tasks (map[task.id] => task)
 class Database(object):
     def __init__(self):
         # a counter (from which to spawn ids)
@@ -159,6 +130,7 @@ class Database(object):
         # 0 = reset, 1 = next stage, 2 = two stages forward, -1 = previous stage
         if grade == 0:
             task["stage"] = 0
+            print task["answer"]
         else:
             task["stage"] += grade
         self.schedule_task(task)
@@ -184,9 +156,11 @@ def tasks(category=None):
     return Database().get_tasks(category)
 
 if __name__ == "__main__":
+    # print usage message if not enough input params
     if len(sys.argv) < 2:
         print "usage: [tasks <optional: category>|remember <category> <description:answer>|review <item number> <grade>]"
         sys.exit()
+    # printing today's tasks
     if sys.argv[1] == "tasks":
         category = None
         if len(sys.argv) > 2:
@@ -196,10 +170,11 @@ if __name__ == "__main__":
             print "no tasks left! (or empty category..)"
         else: 
             print tasks
+    # add to the database
     elif sys.argv[1] == "remember" and len(sys.argv) >= 3:
         category = sys.argv[2]
         description, answer, stage = (" ".join(sys.argv[3:]).split(":") + ["", "", "0"])[:3]
         remember(category, description, answer, stage)
-        # remember(sys.argv[2])
+    # complete one of today's tasks
     elif sys.argv[1] == "review" and len(sys.argv) >= 4:
         print review(*sys.argv[2:])
