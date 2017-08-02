@@ -8,16 +8,15 @@ i don't want to get overloaded with items to review, so i spread out reviews
 such that there are never more than x tasks to review per day
 
 a task has:
-  an id (a sequential integer)
-  a category (french, general)
-  a creation date (unixtime), 
-  a review date 
-  and a stage
+  an id (a sequential integer),
+  a category (french, general),
+  a creation date (YYYY-MM-DD), 
+  a review date (YYYY-MM-DD),
+  and a stage (0-13)
   
 the database containing all of the tasks and their review dates
 the database has:
   a counter (from which to spawn ids)
-  the review schedule (a list of intervals)
   a map of tasks (map[task.id] => task)
 
 afterwards each stage's interval is calculated as the sum of the two preceeding intervals
