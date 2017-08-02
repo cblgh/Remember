@@ -25,7 +25,7 @@ class Database(object):
         # 4 years between reviews is like... enough. i can take time out to review
         # well-known concepts every 4 years
         self.MAX_REVIEW_INTERVAL = 365 * 4
-        self.DEFAULT_PATH = "srs.json"
+        self.DEFAULT_PATH = "F:/code/tome-remember/srs.json"
 
         self.load()
         self.calendar = self.populate_calendar()
@@ -131,7 +131,6 @@ class Database(object):
         # 0 = reset, 1 = next stage, 2 = two stages forward, -1 = previous stage
         if grade == 0:
             task["stage"] = 0
-            print task["answer"]
         else:
             task["stage"] += grade
         self.schedule_task(task)
@@ -145,7 +144,6 @@ class Database(object):
                 task["category"] == category))])
 
 def remember(category, description, answer, stage=0):
-    print stage
     database = Database()
     database.remember(category, description, answer, stage)
 
@@ -153,7 +151,8 @@ def review(task_number, grade):
     return Database().review(task_number, grade)
 
 def tasks(category=None):
-    return Database().get_tasks(category)
+    tasks = Database().get_tasks(category)
+    return tasks
 
 if __name__ == "__main__":
     # print usage message if not enough input params
