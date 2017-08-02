@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
-import datetime
+from datetime import datetime, timedelta
 import io
 import json
 import sys
 
 DATE_FORMAT = "%Y-%m-%d"
-TODAY = datetime.datetime.today().strftime(DATE_FORMAT)
-
+TODAY = datetime.today().strftime(DATE_FORMAT)
 
 # INTENT
 # i want to remember specific items using prompts to aid recall like
@@ -23,8 +22,6 @@ TODAY = datetime.datetime.today().strftime(DATE_FORMAT)
 #   a review date 
 #   and a stage
 
-
-
 # afterwards each stage's interval is calculated as the sum of the two preceeding intervals
 # next_interval = schedule[stage-1] + schedule[stage-2]
 # so interval = schedule[3] + schedule[4] = 6 + 12 = 18
@@ -32,7 +29,6 @@ TODAY = datetime.datetime.today().strftime(DATE_FORMAT)
 #     interval = schedule[-1] + schedule[-2]
 #     schedule.append(interval)
 #
-# print schedule
 
 # interval => min(schedule[stage], 365*3)
 
@@ -42,7 +38,6 @@ TODAY = datetime.datetime.today().strftime(DATE_FORMAT)
 #   the review schedule (a list of intervals)
 #   a map of tasks (map[task.id] => task)
 class Database(object):
-
     def __init__(self):
         # a counter (from which to spawn ids)
         self.counter = 0
@@ -65,8 +60,13 @@ class Database(object):
         self.load()
         self.calendar = self.populate_calendar()
         self.todays_tasks = []
-        if TODAY in self.calendar:
-            self.todays_tasks = self.calendar[TODAY]
+        # get all tasks for review up to and including today
+        for date in self.calendar:
+            if datetime.strptime(date, DATE_FORMAT) <= datetime.today():
+                # get the tasks that are due
+                for task in self.calendar[date]:
+                    # and add them to today's tasks to review
+                    self.todays_tasks.append(task)
 
     def generate_id(self):
         task_id = self.counter
@@ -119,8 +119,8 @@ class Database(object):
         return self.schedule[task["stage"]]
 
     def schedule_task(self, task):
-        interval = datetime.timedelta(days=self.get_interval(task))
-        new_date = datetime.datetime.strptime(task["review_date"], DATE_FORMAT) + interval
+        interval = timedelta(days=self.get_interval(task))
+        new_date = datetime.strptime(task["review_date"], DATE_FORMAT) + interval
         task["review_date"] = new_date.strftime(DATE_FORMAT)
         self.update_calendar(task)
         self.save()
@@ -142,6 +142,12 @@ class Database(object):
         self.save()
 
     def review(self, task_number, grade):
+        task_number = int(task_number)
+        grade = int(grade)
+        # no such task to review
+        if task_number > len(self.todays_tasks) - 1:
+            print "no such task to review"
+            return -1
         task = self.todays_tasks[task_number]
         # maybe grade is how to increment the stage
         # 0 = reset, 1 = next stage, 2 = two stages forward, -1 = previous stage
@@ -152,18 +158,18 @@ class Database(object):
         self.schedule_task(task)
         self.save()
         # return amount of days before next review
-        return self.schedule[task.stage]
+        return self.schedule[task["stage"]]
 
     def get_tasks(self, category):
         return "\n".join(["{} {}".format(index, task["data"]) for (index, task) in
-            enumerate(self.todays_tasks) if (!category or (category and task["category"] is category))])
+            enumerate(self.todays_tasks) if (not category or (category and task["category"] is category))])
 
 def remember(category, description, answer, stage=0):
     database = Database()
     database.remember(category, description, stage)
 
-def review(task, grade):
-    return Database().review(task, grade)
+def review(task_number, grade):
+    return Database().review(task_number, grade)
 
 def tasks(category=None):
     return Database().get_tasks(category)
@@ -177,4 +183,4 @@ if __name__ == "__main__":
     elif sys.argv[1] == "remember" and len(sys.argv) >= 3:
         remember(sys.argv[2])
     elif sys.argv[1] == "review" and len(sys.argv) >= 4:
-        review(*sys.argv[2:])
+        print review(*sys.argv[2:])
