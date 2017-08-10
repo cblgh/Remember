@@ -139,6 +139,7 @@ class Database(object):
         # 0 = reset, 1 = next stage, 2 = two stages forward, -1 = previous stage
         if grade == 0:
             task["stage"] = 0
+            print task["answer"]
         else:
             task["stage"] += grade
         self.schedule_task(task)
@@ -159,7 +160,7 @@ def remember(category, description, answer, stage=0):
 def forget(task_number):
     return Database().forget(task_number)
 
-def review(task_number, grade):
+def review(task_number, grade=1):
     return Database().review(task_number, grade)
 
 def parse(message):
