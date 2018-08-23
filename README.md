@@ -8,6 +8,8 @@ i don't want to get overloaded with items to review, so i spread out reviews
 such that there are never more than x tasks to review per day
 
 a task has:
+  a question ("how does kademlia work?"),
+  an answer ("short answer about using buckets to place data + using XOR on keys for determining shortest path),
   an id (a sequential integer),
   a category (french, general),
   a creation date (YYYY-MM-DD), 
